@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { PlusCircle, File, FileText, ImageIcon, Plus } from 'lucide-react-native';
 import Colors from '@/constants/Colors';
@@ -112,7 +112,10 @@ export default function MedicalRecordsScreen() {
   const renderRecordItem = ({ item }: { item: MedicalRecord }) => {
     return (
       <Card style={styles.recordCard} onPress={() => handleRecordPress(item)}>
-        <View style={styles.recordHeader}>
+        <View style={[
+          styles.recordHeader,
+          { marginBottom: item.description ? Layout.spacing.sm : 0 }
+        ]}>
           <View style={styles.iconContainer}>{getRecordIcon(item.type)}</View>
           <View style={styles.recordInfo}>
             <Text style={styles.recordTitle}>{item.title}</Text>
@@ -279,7 +282,6 @@ const styles = StyleSheet.create({
   },
   recordHeader: {
     flexDirection: 'row',
-    marginBottom: item.description ? Layout.spacing.sm : 0,
   },
   iconContainer: {
     width: 40,
@@ -343,11 +345,4 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  all: 'All',
-  lab_reports: 'Lab Reports',
-  imaging: 'Imaging',
-  no_records_found: 'No medical records found',
 });
-
-// Add the ScrollView import
-import { ScrollView } from 'react-native';
