@@ -55,7 +55,7 @@ const removeFromStorage = async (key: string) => {
 };
 
 // Auth provider component
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const isMounted = useRef(true);
@@ -67,32 +67,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  // Safe setState functions that only update if component is mounted
-  const safeSetUser = (newUser: User | null) => {
-    if (isMounted.current) {
-      setUser(newUser);
-    }
-  };
-
-  const safeSetIsLoading = (loading: boolean) => {
-    if (isMounted.current) {
-      setIsLoading(loading);
-    }
-  };
-
   // Check if user is logged in on mount
   useEffect(() => {
     const loadUser = async () => {
       try {
         const userData = await getFromStorage(USER_STORAGE_KEY);
         if (userData && isMounted.current) {
-          safeSetUser(JSON.parse(userData));
+          setUser(JSON.parse(userData));
         }
       } catch (error) {
         console.error('Failed to load user:', error);
       } finally {
         if (isMounted.current) {
-          safeSetIsLoading(false);
+          setIsLoading(false);
         }
       }
     };
@@ -105,7 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isLoading,
     signIn: async (email: string, password: string) => {
       try {
-        safeSetIsLoading(true);
+        setIsLoading(true);
         
         // Mock API call - Replace with actual API integration
         // Simulating successful login with mock data based on email
@@ -145,7 +132,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await saveToStorage(TOKEN_STORAGE_KEY, 'mock_token_' + Date.now());
         
         if (isMounted.current) {
-          safeSetUser(mockUser);
+          setUser(mockUser);
         }
         return true;
       } catch (error) {
@@ -153,29 +140,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return false;
       } finally {
         if (isMounted.current) {
-          safeSetIsLoading(false);
+          setIsLoading(false);
         }
       }
     },
     signOut: async () => {
       try {
-        safeSetIsLoading(true);
+        setIsLoading(true);
         await removeFromStorage(USER_STORAGE_KEY);
         await removeFromStorage(TOKEN_STORAGE_KEY);
         if (isMounted.current) {
-          safeSetUser(null);
+          setUser(null);
         }
       } catch (error) {
         console.error('Sign out failed:', error);
       } finally {
         if (isMounted.current) {
-          safeSetIsLoading(false);
+          setIsLoading(false);
         }
       }
     },
     signUp: async (userData: Partial<User>, password: string) => {
       try {
-        safeSetIsLoading(true);
+        setIsLoading(true);
         
         // Mock API call - Replace with actual API integration
         const mockUser: User = {
@@ -196,7 +183,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await saveToStorage(TOKEN_STORAGE_KEY, 'mock_token_' + Date.now());
         
         if (isMounted.current) {
-          safeSetUser(mockUser);
+          setUser(mockUser);
         }
         return true;
       } catch (error) {
@@ -204,7 +191,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return false;
       } finally {
         if (isMounted.current) {
-          safeSetIsLoading(false);
+          setIsLoading(false);
         }
       }
     },
@@ -218,7 +205,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await saveToStorage(USER_STORAGE_KEY, JSON.stringify(updatedUser));
         
         if (isMounted.current) {
-          safeSetUser(updatedUser);
+          setUser(updatedUser);
         }
         return true;
       } catch (error) {
@@ -233,7 +220,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
 // Hook to use auth context
 export const useAuth = () => useContext(AuthContext);
