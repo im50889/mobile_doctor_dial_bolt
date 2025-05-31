@@ -1,12 +1,8 @@
 import { useState, useEffect, createContext, useContext, useRef } from 'react';
-import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { User, Doctor, Patient } from '@/types/user';
+import { supabase } from '@/lib/supabase';
 
-// Mock storage for web platform
-const webStorage = new Map<string, string>();
-
-// Interface for the auth context
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
@@ -16,7 +12,6 @@ interface AuthContextType {
   updateUser: (userData: Partial<User>) => Promise<boolean>;
 }
 
-// Create the context
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
@@ -26,66 +21,103 @@ const AuthContext = createContext<AuthContextType>({
   updateUser: async () => false,
 });
 
-// Storage key
-const USER_STORAGE_KEY = 'doctor_dial_user';
-const TOKEN_STORAGE_KEY = 'doctor_dial_token';
-
-// Helper function for storage operations
-const saveToStorage = async (key: string, value: string) => {
-  if (Platform.OS === 'web') {
-    webStorage.set(key, value);
-    return;
-  }
-  await SecureStore.setItemAsync(key, value);
-};
-
-const getFromStorage = async (key: string) => {
-  if (Platform.OS === 'web') {
-    return webStorage.get(key) || null;
-  }
-  return await SecureStore.getItemAsync(key);
-};
-
-const removeFromStorage = async (key: string) => {
-  if (Platform.OS === 'web') {
-    webStorage.delete(key);
-    return;
-  }
-  await SecureStore.deleteItemAsync(key);
-};
-
-// Auth provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const isMounted = useRef(true);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       isMounted.current = false;
     };
   }, []);
 
-  // Check if user is logged in on mount
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const userData = await getFromStorage(USER_STORAGE_KEY);
-        if (userData && isMounted.current) {
-          setUser(JSON.parse(userData));
-        }
-      } catch (error) {
-        console.error('Failed to load user:', error);
-      } finally {
-        if (isMounted.current) {
-          setIsLoading(false);
-        }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        await loadUserProfile(session.user.id);
+      } else {
+        setUser(null);
       }
-    };
+      setIsLoading(false);
+    });
 
-    loadUser();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
+
+  const loadUserProfile = async (userId: string) => {
+    try {
+      // First check the profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Check if the user is a doctor
+      const { data: doctor, error: doctorError } = await supabase
+        .from('doctors')
+        .select('*')
+        .eq('auth_user_id', userId)
+        .single();
+
+      if (!doctorError && doctor) {
+        const doctorUser: Doctor = {
+          id: userId,
+          email: profile.email,
+          phone: doctor.phone_no || '',
+          role: 'doctor',
+          firstName: doctor.name.split(' ')[0],
+          lastName: doctor.name.split(' ').slice(1).join(' '),
+          profilePicture: doctor.image_url,
+          specialization: doctor.specialty,
+          experience: doctor.experience,
+          qualifications: [],
+          licenseNumber: doctor.rmp_registration_number || '',
+          hospital: doctor.hospital_clinic,
+          consultationFees: {
+            video: doctor.consultation_fee,
+            chat: Math.floor(doctor.consultation_fee * 0.7),
+          },
+          languages: doctor.languages || [],
+          about: doctor.about,
+          availability: [],
+          rating: doctor.rating || 0,
+          reviewCount: 0,
+          isVerified: true,
+          createdAt: profile.created_at,
+          updatedAt: profile.updated_at,
+        };
+        setUser(doctorUser);
+      } else {
+        // User is a patient
+        const patientUser: Patient = {
+          id: userId,
+          email: profile.email || '',
+          phone: profile.phone || '',
+          role: 'patient',
+          firstName: profile.name.split(' ')[0],
+          lastName: profile.name.split(' ').slice(1).join(' '),
+          profilePicture: profile.profile_picture,
+          dateOfBirth: profile.date_of_birth,
+          gender: profile.gender,
+          bloodGroup: profile.blood_group,
+          allergies: profile.allergies,
+          chronicConditions: profile.chronic_conditions,
+          createdAt: profile.created_at,
+          updatedAt: profile.updated_at,
+        };
+        setUser(patientUser);
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      setUser(null);
+    }
+  };
 
   const value = {
     user,
@@ -93,120 +125,115 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn: async (email: string, password: string) => {
       try {
         setIsLoading(true);
-        
-        // Mock API call - Replace with actual API integration
-        // Simulating successful login with mock data based on email
-        const isDoctor = email.includes('doctor');
-        
-        let mockUser: User;
-        
-        if (isDoctor) {
-          mockUser = {
-            id: '1',
-            email: email,
-            phone: '+919876543210',
-            role: 'doctor',
-            firstName: 'Dr. Anil',
-            lastName: 'Kumar',
-            profilePicture: 'https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          } as Doctor;
-        } else {
-          mockUser = {
-            id: '2',
-            email: email,
-            phone: '+919876543211',
-            role: 'patient',
-            firstName: 'Priya',
-            lastName: 'Sharma',
-            profilePicture: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          } as Patient;
-        }
-        
-        // Save user to storage
-        await saveToStorage(USER_STORAGE_KEY, JSON.stringify(mockUser));
-        // Save token (mock)
-        await saveToStorage(TOKEN_STORAGE_KEY, 'mock_token_' + Date.now());
-        
-        if (isMounted.current) {
-          setUser(mockUser);
-        }
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+
+        await loadUserProfile(data.user.id);
         return true;
       } catch (error) {
         console.error('Login failed:', error);
         return false;
       } finally {
-        if (isMounted.current) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     },
     signOut: async () => {
       try {
         setIsLoading(true);
-        await removeFromStorage(USER_STORAGE_KEY);
-        await removeFromStorage(TOKEN_STORAGE_KEY);
-        if (isMounted.current) {
-          setUser(null);
-        }
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        setUser(null);
       } catch (error) {
         console.error('Sign out failed:', error);
       } finally {
-        if (isMounted.current) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     },
     signUp: async (userData: Partial<User>, password: string) => {
       try {
         setIsLoading(true);
-        
-        // Mock API call - Replace with actual API integration
-        const mockUser: User = {
-          id: Date.now().toString(),
-          email: userData.email || '',
-          phone: userData.phone || '',
-          role: userData.role || 'patient',
-          firstName: userData.firstName || '',
-          lastName: userData.lastName || '',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          ...userData
-        };
-        
-        // Save user to storage
-        await saveToStorage(USER_STORAGE_KEY, JSON.stringify(mockUser));
-        // Save token (mock)
-        await saveToStorage(TOKEN_STORAGE_KEY, 'mock_token_' + Date.now());
-        
-        if (isMounted.current) {
-          setUser(mockUser);
+
+        // Register user with Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: userData.email!,
+          password: password,
+        });
+
+        if (authError) throw authError;
+
+        // Create profile record
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user!.id,
+            name: `${userData.firstName} ${userData.lastName}`,
+            email: userData.email,
+            phone: userData.phone,
+          });
+
+        if (profileError) throw profileError;
+
+        // If registering as a doctor, create doctor record
+        if (userData.role === 'doctor') {
+          const { error: doctorError } = await supabase
+            .from('doctors')
+            .insert({
+              auth_user_id: authData.user!.id,
+              name: `${userData.firstName} ${userData.lastName}`,
+              email: userData.email,
+              phone_no: userData.phone,
+              status: 'inactive', // Requires approval
+            });
+
+          if (doctorError) throw doctorError;
         }
+
+        await loadUserProfile(authData.user!.id);
         return true;
       } catch (error) {
         console.error('Sign up failed:', error);
         return false;
       } finally {
-        if (isMounted.current) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     },
     updateUser: async (userData: Partial<User>) => {
       try {
         if (!user) return false;
-        
-        const updatedUser = { ...user, ...userData, updatedAt: new Date().toISOString() };
-        
-        // Save updated user to storage
-        await saveToStorage(USER_STORAGE_KEY, JSON.stringify(updatedUser));
-        
-        if (isMounted.current) {
-          setUser(updatedUser);
+
+        const updates = {
+          name: `${userData.firstName} ${userData.lastName}`,
+          email: userData.email,
+          phone: userData.phone,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', user.id);
+
+        if (profileError) throw profileError;
+
+        if (user.role === 'doctor') {
+          const { error: doctorError } = await supabase
+            .from('doctors')
+            .update({
+              name: `${userData.firstName} ${userData.lastName}`,
+              email: userData.email,
+              phone_no: userData.phone,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('auth_user_id', user.id);
+
+          if (doctorError) throw doctorError;
         }
+
+        await loadUserProfile(user.id);
         return true;
       } catch (error) {
         console.error('Update user failed:', error);
@@ -222,5 +249,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Hook to use auth context
 export const useAuth = () => useContext(AuthContext);
