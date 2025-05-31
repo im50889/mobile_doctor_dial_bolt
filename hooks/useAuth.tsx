@@ -34,12 +34,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
+      if (session?.user && isMounted.current) {
         await loadUserProfile(session.user.id);
-      } else {
+      } else if (isMounted.current) {
         setUser(null);
       }
-      setIsLoading(false);
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
     });
 
     return () => {
@@ -92,7 +94,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           createdAt: profile.created_at,
           updatedAt: profile.updated_at,
         };
-        setUser(doctorUser);
+        if (isMounted.current) {
+          setUser(doctorUser);
+        }
       } else {
         // User is a patient
         const patientUser: Patient = {
@@ -111,11 +115,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           createdAt: profile.created_at,
           updatedAt: profile.updated_at,
         };
-        setUser(patientUser);
+        if (isMounted.current) {
+          setUser(patientUser);
+        }
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
-      setUser(null);
+      if (isMounted.current) {
+        setUser(null);
+      }
     }
   };
 
@@ -124,7 +132,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     signIn: async (email: string, password: string) => {
       try {
-        setIsLoading(true);
+        if (isMounted.current) {
+          setIsLoading(true);
+        }
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -138,24 +148,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Login failed:', error);
         return false;
       } finally {
-        setIsLoading(false);
+        if (isMounted.current) {
+          setIsLoading(false);
+        }
       }
     },
     signOut: async () => {
       try {
-        setIsLoading(true);
+        if (isMounted.current) {
+          setIsLoading(true);
+        }
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
-        setUser(null);
+        if (isMounted.current) {
+          setUser(null);
+        }
       } catch (error) {
         console.error('Sign out failed:', error);
       } finally {
-        setIsLoading(false);
+        if (isMounted.current) {
+          setIsLoading(false);
+        }
       }
     },
     signUp: async (userData: Partial<User>, password: string) => {
       try {
-        setIsLoading(true);
+        if (isMounted.current) {
+          setIsLoading(true);
+        }
 
         // Register user with Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -198,7 +218,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Sign up failed:', error);
         return false;
       } finally {
-        setIsLoading(false);
+        if (isMounted.current) {
+          setIsLoading(false);
+        }
       }
     },
     updateUser: async (userData: Partial<User>) => {
