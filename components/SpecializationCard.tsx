@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { Stethoscope, Baby, ScanFace, Bone, HeartPulse, Brain, Female, Eye, Ear, Tooth, Apple } from 'lucide-react-native';
+import { Stethoscope, Baby, ScanFace, Bone, HeartPulse, Brain, User, Eye, Ear, Pill, Apple } from 'lucide-react-native';
 import Colors from '@/constants/Colors';
 import Layout from '@/constants/Layout';
 import { Specialization } from '@/constants/Specializations';
@@ -31,7 +31,7 @@ export default function SpecializationCard({ specialization, onPress }: Speciali
       case 'brain':
         return <Brain {...iconProps} />;
       case 'female':
-        return <Female {...iconProps} />;
+        return <User {...iconProps} />;
       case 'brain-circuit':
         return <Brain {...iconProps} />;
       case 'eye':
@@ -39,7 +39,7 @@ export default function SpecializationCard({ specialization, onPress }: Speciali
       case 'ear':
         return <Ear {...iconProps} />;
       case 'tooth':
-        return <Tooth {...iconProps} />;
+        return <Pill {...iconProps} />;
       case 'apple':
         return <Apple {...iconProps} />;
       default:

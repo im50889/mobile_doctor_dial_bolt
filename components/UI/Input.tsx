@@ -15,7 +15,7 @@ import { Eye, EyeOff } from 'lucide-react-native';
 import Colors from '@/constants/Colors';
 import Layout from '@/constants/Layout';
 
-interface InputProps extends TextInputProps {
+interface InputProps extends Omit<TextInputProps, 'style'> {
   label?: string;
   error?: string;
   containerStyle?: StyleProp<ViewStyle>;
@@ -51,7 +51,7 @@ export default function Input({
       
       <View style={[
         styles.inputContainer,
-        error ? styles.inputError : null,
+        error ? styles.inputError : undefined,
         inputStyle
       ]}>
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
@@ -59,8 +59,9 @@ export default function Input({
         <TextInput
           style={[
             styles.input,
-            leftIcon ? styles.inputWithLeftIcon : null,
-            (rightIcon || (secureTextEntry && showPasswordToggle)) ? styles.inputWithRightIcon : null,
+            Platform.OS === 'web' ? styles.webInput : undefined,
+            leftIcon ? styles.inputWithLeftIcon : undefined,
+            (rightIcon || (secureTextEntry && showPasswordToggle)) ? styles.inputWithRightIcon : undefined,
           ]}
           placeholderTextColor={Colors.neutral[400]}
           secureTextEntry={secureTextEntry && !isPasswordVisible}
@@ -115,11 +116,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.spacing.md,
     fontSize: 16,
     color: Colors.neutral[800],
-    ...Platform.select({
-      web: {
-        outlineStyle: 'none',
-      },
-    }),
+  },
+  webInput: {
+    outlineWidth: 0,
   },
   inputWithLeftIcon: {
     paddingLeft: 48,

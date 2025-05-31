@@ -318,6 +318,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.primary[500],
   },
-  first_name: 'First Name',
-  last_name: 'Last Name',
 });

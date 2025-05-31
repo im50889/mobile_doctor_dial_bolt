@@ -249,8 +249,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.white,
   },
-  upcoming: 'Upcoming',
-  past: 'Past',
-  no_upcoming_appointments: 'You have no upcoming appointments',
-  no_past_appointments: 'You have no past appointments',
 });

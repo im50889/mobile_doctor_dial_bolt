@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, Platform } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, Platform, ViewStyle, TextStyle, ImageStyle } from 'react-native';
 import { router } from 'expo-router';
 import { 
   User, 
@@ -20,166 +20,31 @@ import Divider from '@/components/UI/Divider';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 
-export default function SettingsScreen() {
-  const { t, locale, setLocale } = useTranslation();
-  const { user, signOut } = useAuth();
-  
-  const handleSignOut = async () => {
-    if (Platform.OS === 'web') {
-      await signOut();
-      router.replace('/(auth)/login');
-    } else {
-      Alert.alert(
-        t('logout'),
-        t('logout_confirm'),
-        [
-          {
-            text: t('cancel'),
-            style: 'cancel',
-          },
-          {
-            text: t('logout'),
-            onPress: async () => {
-              await signOut();
-              router.replace('/(auth)/login');
-            },
-          },
-        ]
-      );
-    }
-  };
-  
-  const toggleLanguage = () => {
-    setLocale(locale === 'en' ? 'hi' : 'en');
-  };
-  
-  const renderSettingItem = (
-    icon: React.ReactNode,
-    title: string,
-    onPress: () => void,
-    showBorder = true
-  ) => {
-    return (
-      <>
-        <TouchableOpacity style={styles.settingItem} onPress={onPress}>
-          <View style={styles.settingIconContainer}>{icon}</View>
-          <Text style={styles.settingText}>{title}</Text>
-          <ChevronRight size={20} color={Colors.neutral[400]} />
-        </TouchableOpacity>
-        {showBorder && <Divider style={styles.divider} />}
-      </>
-    );
-  };
-  
-  return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('settings')}</Text>
-      </View>
-      
-      <TouchableOpacity
-        style={styles.profileSection}
-        onPress={() => router.push('/(app)/profile')}
-      >
-        <Avatar
-          uri={user?.profilePicture}
-          name={`${user?.firstName} ${user?.lastName}`}
-          size={70}
-          style={styles.avatar}
-        />
-        <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>
-            {user?.firstName} {user?.lastName}
-          </Text>
-          <Text style={styles.profileSubtitle}>
-            {user?.role === 'doctor' ? t('doctor') : t('patient')}
-          </Text>
-          <Text style={styles.viewProfileText}>{t('view_profile')}</Text>
-        </View>
-      </TouchableOpacity>
-      
-      <View style={styles.settingsCard}>
-        <Text style={styles.sectionTitle}>{t('account_settings')}</Text>
-        
-        {renderSettingItem(
-          <User size={20} color={Colors.primary[500]} />,
-          t('personal_details'),
-          () => router.push('/(app)/profile-edit')
-        )}
-        
-        {renderSettingItem(
-          <Bell size={20} color={Colors.primary[500]} />,
-          t('notifications'),
-          () => router.push('/(app)/notifications')
-        )}
-        
-        {renderSettingItem(
-          <Globe size={20} color={Colors.primary[500]} />,
-          `${t('language')}: ${locale === 'en' ? t('english') : t('hindi')}`,
-          toggleLanguage
-        )}
-        
-        {renderSettingItem(
-          <CreditCard size={20} color={Colors.primary[500]} />,
-          t('payment_methods'),
-          () => router.push('/(app)/payment-methods'),
-          false
-        )}
-      </View>
-      
-      <View style={styles.settingsCard}>
-        <Text style={styles.sectionTitle}>{t('more')}</Text>
-        
-        {renderSettingItem(
-          <Shield size={20} color={Colors.primary[500]} />,
-          t('privacy_policy'),
-          () => router.push('/(app)/privacy-policy')
-        )}
-        
-        {renderSettingItem(
-          <FileText size={20} color={Colors.primary[500]} />,
-          t('terms_of_service'),
-          () => router.push('/(app)/terms')
-        )}
-        
-        {renderSettingItem(
-          <HelpCircle size={20} color={Colors.primary[500]} />,
-          t('help_support'),
-          () => router.push('/(app)/help')
-        )}
-        
-        {renderSettingItem(
-          <Info size={20} color={Colors.primary[500]} />,
-          t('about_us'),
-          () => router.push('/(app)/about'),
-          false
-        )}
-      </View>
-      
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={handleSignOut}
-      >
-        <LogOut size={20} color={Colors.error[500]} />
-        <Text style={styles.logoutText}>{t('logout')}</Text>
-      </TouchableOpacity>
-      
-      <View style={styles.footer}>
-        <Image
-          source={{ uri: 'https://images.pexels.com/photos/5407206/pexels-photo-5407206.jpeg' }}
-          style={styles.footerLogo}
-        />
-        <Text style={styles.footerText}>Doctor Dial v1.0.0</Text>
-      </View>
-    </ScrollView>
-  );
-}
+type Styles = {
+  container: ViewStyle;
+  contentContainer: ViewStyle;
+  header: ViewStyle;
+  title: TextStyle;
+  profileSection: ViewStyle;
+  avatar: ViewStyle;
+  profileInfo: ViewStyle;
+  profileName: TextStyle;
+  profileSubtitle: TextStyle;
+  viewProfileText: TextStyle;
+  settingsCard: ViewStyle;
+  sectionTitle: TextStyle;
+  settingItem: ViewStyle;
+  settingIconContainer: ViewStyle;
+  settingText: TextStyle;
+  divider: ViewStyle;
+  logoutButton: ViewStyle;
+  logoutText: TextStyle;
+  footer: ViewStyle;
+  footerLogo: ImageStyle;
+  footerText: TextStyle;
+};
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<Styles>({
   container: {
     flex: 1,
     backgroundColor: Colors.background.light,
@@ -292,10 +157,163 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.neutral[500],
   },
-  doctor: 'Doctor',
-  patient: 'Patient',
-  view_profile: 'View Profile',
-  payment_methods: 'Payment Methods',
-  more: 'More',
-  logout_confirm: 'Are you sure you want to log out?',
 });
+
+export default function SettingsScreen() {
+  const { t, locale, setLocale } = useTranslation();
+  const { user, signOut } = useAuth();
+  
+  const handleSignOut = async () => {
+    if (Platform.OS === 'web') {
+      await signOut();
+      router.replace('/(auth)/login');
+    } else {
+      Alert.alert(
+        t('logout'),
+        t('logout_confirm'),
+        [
+          {
+            text: t('cancel'),
+            style: 'cancel',
+          },
+          {
+            text: t('logout'),
+            onPress: async () => {
+              await signOut();
+              router.replace('/(auth)/login');
+            },
+          },
+        ]
+      );
+    }
+  };
+  
+  const toggleLanguage = () => {
+    setLocale(locale === 'en' ? 'hi' : 'en');
+  };
+  
+  const renderSettingItem = (
+    icon: React.ReactNode,
+    title: string,
+    onPress: () => void,
+    showBorder = true
+  ) => {
+    return (
+      <>
+        <TouchableOpacity style={styles.settingItem} onPress={onPress}>
+          <View style={styles.settingIconContainer}>{icon}</View>
+          <Text style={styles.settingText}>{title}</Text>
+          <ChevronRight size={20} color={Colors.neutral[400]} />
+        </TouchableOpacity>
+        {showBorder && <Divider style={styles.divider} />}
+      </>
+    );
+  };
+  
+  return (
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.header}>
+        <Text style={styles.title}>{t('settings')}</Text>
+      </View>
+      
+      <TouchableOpacity
+        style={styles.profileSection}
+        onPress={() => router.push('/(app)/profile-edit')}
+      >
+        <Avatar
+          uri={user?.profilePicture}
+          name={`${user?.firstName} ${user?.lastName}`}
+          size={70}
+          style={styles.avatar}
+        />
+        <View style={styles.profileInfo}>
+          <Text style={styles.profileName}>
+            {user?.firstName} {user?.lastName}
+          </Text>
+          <Text style={styles.profileSubtitle}>
+            {user?.role === 'doctor' ? t('doctor') : t('patient')}
+          </Text>
+          <Text style={styles.viewProfileText}>{t('view_profile')}</Text>
+        </View>
+      </TouchableOpacity>
+      
+      <View style={styles.settingsCard}>
+        <Text style={styles.sectionTitle}>{t('account_settings')}</Text>
+        
+        {renderSettingItem(
+          <User size={20} color={Colors.primary[500]} />,
+          t('personal_details'),
+          () => router.push('/(app)/profile-edit')
+        )}
+        
+        {renderSettingItem(
+          <Bell size={20} color={Colors.primary[500]} />,
+          t('notifications'),
+          () => router.push('/(app)/notifications')
+        )}
+        
+        {renderSettingItem(
+          <Globe size={20} color={Colors.primary[500]} />,
+          `${t('language')}: ${locale === 'en' ? t('english') : t('hindi')}`,
+          toggleLanguage
+        )}
+        
+        {renderSettingItem(
+          <CreditCard size={20} color={Colors.primary[500]} />,
+          t('payment_methods'),
+          () => router.push('/(app)/payment-methods'),
+          false
+        )}
+      </View>
+      
+      <View style={styles.settingsCard}>
+        <Text style={styles.sectionTitle}>{t('more')}</Text>
+        
+        {renderSettingItem(
+          <Shield size={20} color={Colors.primary[500]} />,
+          t('privacy_policy'),
+          () => router.push('/(app)/privacy-policy')
+        )}
+        
+        {renderSettingItem(
+          <FileText size={20} color={Colors.primary[500]} />,
+          t('terms_of_service'),
+          () => router.push('/(app)/terms')
+        )}
+        
+        {renderSettingItem(
+          <HelpCircle size={20} color={Colors.primary[500]} />,
+          t('help_support'),
+          () => router.push('/(app)/help')
+        )}
+        
+        {renderSettingItem(
+          <Info size={20} color={Colors.primary[500]} />,
+          t('about_us'),
+          () => router.push('/(app)/about'),
+          false
+        )}
+      </View>
+      
+      <TouchableOpacity
+        style={styles.logoutButton}
+        onPress={handleSignOut}
+      >
+        <LogOut size={20} color={Colors.error[500]} />
+        <Text style={styles.logoutText}>{t('logout')}</Text>
+      </TouchableOpacity>
+      
+      <View style={styles.footer}>
+        <Image
+          source={{ uri: 'https://images.pexels.com/photos/5407206/pexels-photo-5407206.jpeg' }}
+          style={styles.footerLogo}
+        />
+        <Text style={styles.footerText}>Doctor Dial v1.0.0</Text>
+      </View>
+    </ScrollView>
+  );
+}

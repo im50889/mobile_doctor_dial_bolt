@@ -13,7 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/Colors';
 import Layout from '@/constants/Layout';
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'text';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'text' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps {
@@ -62,6 +62,8 @@ export default function Button({
       baseStyles.push(styles.outlineButton);
     } else if (variant === 'text') {
       baseStyles.push(styles.textButton);
+    } else if (variant === 'ghost') {
+      baseStyles.push(styles.ghostButton);
     }
     
     return baseStyles;
@@ -78,6 +80,8 @@ export default function Button({
       baseStyles.push(styles.outlineText);
     } else if (variant === 'text') {
       baseStyles.push(styles.textButtonText);
+    } else if (variant === 'ghost') {
+      baseStyles.push(styles.ghostText);
     }
     
     if (disabled) {
@@ -126,8 +130,7 @@ export default function Button({
           colors={[Colors.primary[400], Colors.primary[600]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.gradientContainer}
-          borderRadius={Layout.borderRadius.md}
+          style={[styles.gradientContainer, { borderRadius: Layout.borderRadius.md }]}
         >
           {renderContent()}
         </LinearGradient>
@@ -216,6 +219,11 @@ const styles = StyleSheet.create({
     paddingVertical: Layout.spacing.xs,
     paddingHorizontal: Layout.spacing.sm,
   },
+  ghostButton: {
+    backgroundColor: 'transparent',
+    paddingVertical: Layout.spacing.xs,
+    paddingHorizontal: Layout.spacing.sm,
+  },
   // Text styles
   primaryText: {
     color: Colors.white,
@@ -228,6 +236,9 @@ const styles = StyleSheet.create({
   },
   textButtonText: {
     color: Colors.primary[500],
+  },
+  ghostText: {
+    color: Colors.neutral[800],
   },
   // Disabled styles
   disabled: {

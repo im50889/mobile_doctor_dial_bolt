@@ -421,5 +421,4 @@ const styles = StyleSheet.create({
   specializationsContainer: {
     paddingVertical: Layout.spacing.sm,
   },
-  no_upcoming_appointments: 'No upcoming appointments',
 });

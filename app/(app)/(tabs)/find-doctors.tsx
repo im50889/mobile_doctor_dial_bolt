@@ -348,6 +348,4 @@ const styles = StyleSheet.create({
     color: Colors.neutral[600],
     textAlign: 'center',
   },
-  search_doctor_name_specialization: 'Search doctor name, specialization',
-  no_doctors_found: 'No doctors found matching your criteria',
 });
