@@ -57,7 +57,7 @@ export default function LoginScreen() {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => router.push('/(app)/(tabs)')}
           >
             <ArrowLeft size={24} color={Colors.neutral[700]} />
           </TouchableOpacity>
